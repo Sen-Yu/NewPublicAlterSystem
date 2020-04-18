@@ -14,6 +14,8 @@ import java.util.EventListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static java.lang.Thread.sleep;
+
 public class ThreadSender implements Runnable{
     public static int count = 0 ;
 
@@ -30,29 +32,10 @@ public class ThreadSender implements Runnable{
     int repetition;
     int number;
 
+    boolean confirm;
 
-    Timer timer = new Timer();
-    TimerTask task = new TimerTask() {
-        @Override public void run() {
-
-            //재전송
-            if(number == 0 ||count < number) {
-
-                try {
-                    socket.send(packet);
-                    count++;
-                    System.out.println("Resend:"+Thread.currentThread().getName());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            else{
-                System.out.println("반복종료!!!!");
-                timer.cancel();
-            }
-
-        }
-    };
+    //Timer timer = new Timer();
+    //MyTask task;
 
     public ThreadSender(){
 
@@ -72,50 +55,28 @@ public class ThreadSender implements Runnable{
     public void run() {
         System.out.println("dest ip : " + this.destInetAddress + " , dest port : " + this.destPort);
         this.packet = new DatagramPacket(this.buffer,this.buffer.length,this.destInetAddress,this.destPort);
-
+        this.confirm = false;
+        int count = 0;
         try {
-            this.socket.send(packet);
-            System.out.println(Thread.currentThread().getName());
-            System.out.println("CBC->MME");
-            //반복횟수랑 주기마다 재전송(this.repetition* 1000)
-            this.timer.scheduleAtFixedRate(this.task,this.repetition * 1000, this.repetition* 100);
-
-            //MME로부터 confirm올때까지 반복
-            /*
-            while(true){
-                if(this.confirm) {
-                    System.out.println("CBC->CBE");
-
-                    this.socket.send(new DatagramPacket(this.confirmPacket.getData(),this.confirmPacket.getLength(),this.sourceInetAddress,2500));
-                    System.out.println("재전송취소!!!!");
-                    this.timer.cancel();
-
-                    break;
-                }
-            }
-             */
-
-        } catch (IOException e) {
+            do{
+                this.socket.send(this.packet);
+                count++;
+                System.out.println("CBC("+Thread.currentThread().getName()+")->MME");
+                sleep(this.repetition * 1000);
+                //주기마다 쓰레드 휴식 후 실행
+            }while(!confirm &&(this.number == 0 || count <= this.number));
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         System.out.println("쓰레드 종료!!!!");
-
-
-
-
-
     }
-    //2차방법
-    public void confirm() throws IOException {
-        this.task.cancel();
-        this.timer.cancel();
 
-        System.out.println("CBC->CBE");
+    public void confirm() throws IOException {
+        this.confirm = true;
+        System.out.println("CBC("+Thread.currentThread().getName()+")->CBE");
         //MME로부터 받았기에 CBC는 CBE에게 confirm보냄
         this.socket.send(new DatagramPacket(this.confirmPacket.getData(),this.confirmPacket.getLength(),this.sourceInetAddress,3000));
         System.out.println("재전송취소!!!!");
-        this.task.cancel();
-        this.timer.cancel();
     }
 
     public void setBroadPacket(InetAddress destInetAddress, int destPort){
@@ -124,7 +85,6 @@ public class ThreadSender implements Runnable{
     }
 
     public void setConfirmPacket(int serialNumber,int messageidentifier, String waringAreaCoordinates){
-
         JSONObject confirmObj = new JSONObject();
         confirmObj.put("serialNumber",serialNumber);
         confirmObj.put("messageidentifier",messageidentifier);

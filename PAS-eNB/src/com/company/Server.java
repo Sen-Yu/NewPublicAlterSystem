@@ -70,11 +70,6 @@ public class Server {
 
     private void trackingAreaList(DatagramSocket datagramSocket) {
     }
-
-    //MME번호 / 좌표 / ip 체크
-    public void checkTAI(){
-
-    }
     public String getMessageType(String message){
         try {
             JSONParser jsonParser = new JSONParser();
@@ -133,8 +128,6 @@ public class Server {
         }
         return null;
     }
-
-
     public String getLocalIpAddress() {
         try {
             Enumeration<NetworkInterface> en =

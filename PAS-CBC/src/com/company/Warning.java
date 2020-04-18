@@ -26,6 +26,7 @@ public class Warning {
     int dataCodingScheme;
     int repetitionPeriod;
     int numberOfBroadcasts;
+    Vector<TrackingArea> trackingAreaVector;
 
     //전송thread
     ThreadSender sender;
@@ -44,6 +45,7 @@ public class Warning {
         this.dataCodingScheme = 0b01111010;
         this.repetitionPeriod = 30;
         this.numberOfBroadcasts = 0;
+        this.trackingAreaVector = new Vector<TrackingArea>();
     }
 
     //재난의 클래스를 정하는 메소드
@@ -123,19 +125,19 @@ public class Warning {
     }
 
     public String getSource() {
-        return source;
+        return this.source;
     }
 
     public String getCalamity() {
-        return calamity;
+        return this.calamity;
     }
 
     public String getImpactArea() {
-        return impactArea;
+        return this.impactArea;
     }
 
     public String getWaringAreaCoordinates() {
-        return waringAreaCoordinates;
+        return this.waringAreaCoordinates;
     }
 
     public void setMessageType(String messageType) {
@@ -143,7 +145,7 @@ public class Warning {
     }
 
     public String getContext() {
-        return context;
+        return this.context;
     }
 
     public int getMessageidentifier() {
@@ -164,33 +166,36 @@ public class Warning {
     }
 
     public String getMessageType() {
-        return messageType;
+        return this.messageType;
     }
 
     public int getDataCodingScheme() {
-        return dataCodingScheme;
+        return this.dataCodingScheme;
     }
 
     public int getRepetitionPeriod() {
-        return repetitionPeriod;
+        return this.repetitionPeriod;
     }
 
     public int getNumberOfBroadcasts() {
-        return numberOfBroadcasts;
+        return this.numberOfBroadcasts;
     }
 
     public ThreadSender getSender() {
-        return sender;
+        return this.sender;
     }
 
     public void send(){
         Thread thread = new Thread(this.sender);
         thread.setDaemon(true);
-        thread .start();
+        thread.start();
     }
 
     public void confirm() throws IOException {
         this.sender.confirm();
     }
 
+    public Vector<TrackingArea> getTrackingAreaVector() {
+        return this.trackingAreaVector;
+    }
 }
