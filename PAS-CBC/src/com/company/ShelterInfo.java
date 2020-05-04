@@ -1,21 +1,26 @@
 package com.company;
 
 public class ShelterInfo {
+    private String shelterLastAddress;
     private String sheleterName;
-    private int coordinate;
+    private String coordinate;
 
+    public ThreadSender sender;
+    public boolean confirm;
 
-    public ShelterInfo(String sheleterName,int coordinate){
+    public ShelterInfo(String shelterLastAddress,String sheleterName,String coordinate){
+        this.shelterLastAddress = shelterLastAddress;
         this.sheleterName = sheleterName;
         this.coordinate = coordinate;
     }
 
-    public int getCoordinate() {
-        return coordinate;
+    public String getCoordinate() {
+        return this.coordinate;
     }
 
     public String getSheleterName() {
-        return sheleterName;
+        return this.sheleterName;
     }
 
+    public String getShelterLastAddress(){return this.shelterLastAddress;}
 }

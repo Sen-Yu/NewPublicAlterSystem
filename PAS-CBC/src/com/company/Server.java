@@ -16,6 +16,7 @@ import java.util.Vector;
 public class Server {
     DatagramSocket datagramSocket;
 
+
     public Server(int serverPort) {
         try {
             //저장할 메세지들
@@ -28,13 +29,14 @@ public class Server {
                 DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);
 
                 //메세지 대기중
-                System.out.println("--------------------------------------------------------------------------------");
-                System.out.println("ready");
+                System.out.print("--------------------------------------------------------------------------------");
+                System.out.print("CBC ready");
                 System.out.println("--------------------------------------------------------------------------------");
                 //메세지 받음
                 this.datagramSocket.receive(datagramPacket);
 
                 String message = new String(datagramPacket.getData()).trim();
+                System.out.println(message);
                 InetAddress datagramInetAddress = datagramPacket.getAddress();
                 int datagramPort = datagramPacket.getPort();
 
@@ -45,33 +47,35 @@ public class Server {
                     if (messageType.equals("Emergency_Broadcast_Request")) {
                         //파싱
                             //Warning문자 생성
-                            Warning warning = new Warning();
+                            Warning warning = new Warning(this.datagramSocket, datagramInetAddress);
                             warning.jsonToWarning(message);
                             int warningClass = warning.classify();
                             warning.setMessageidentifier(warningClass);
                             warning.setSerialNumber(warningClass);
-
+                            warning.setWarningContentMessage(message);
 
                             //전에 보낸 메세지가 있는지 확인
-
-                            int same = allMessage.findSameWarning(warning.getSerialNumber(),warning.getSerialNumber());
+                            int same = allMessage.findSameWarning(warning.getSerialNumber(), warning.getMessageidentifier());
                             //있는경우 업데이트번호 증가,내용 수정
                             if(same > -1){
+                                //System.out.println("전에 보낸 메시지의 업데이트버전");
+                               // System.out.println(allMessage.getWarning(same).getWarningContentMessage()+"를 "+warning.getContext()+"로 update");
                                  allMessage.getWarning(same).update();
                                  allMessage.getWarning(same).setWarningContentMessage(warning.getContext());
+                                 warning = allMessage.getWarning(same);
                                  //기존의 TAI사용
                             }
                             //없는경우 생성
                             else{
+                                //System.out.println("최초의 메시지이다.");
                                 warning.setWarningContentMessage(warning.getContext());
                                 int repetition = warning.getRepetitionPeriod();
                                 int number = warning.getNumberOfBroadcasts();
+                                System.out.println(warning.getContext());
                                 //TAI설정하기
-                                allMessage.getWarningVector().add(warning);
+
                             }
-
-
-                            warning.setWarningContentMessage(warning.getContext());
+                            //System.out.println("현재warning:"+warning.getContext());
                             int repetition = warning.getRepetitionPeriod();
                             int number = warning.getNumberOfBroadcasts();
                             //TAI설정
@@ -79,14 +83,12 @@ public class Server {
                             //Warning기록
                             allMessage.getWarningVector().add(warning);
 
-
                             //MME로 전송(2차방법)// 나중에 MME가 다수 이기때문에  재조정 필요
                             warning.setSender(this.datagramSocket,warning.WarningToJson().toJSONString().getBytes(), datagramInetAddress, datagramPort,repetition,number);
                             warning.getSender().setBroadPacket(datagramInetAddress,6000);
                             warning.send();
 
                             //MME주소와 포트
-
                     }
 
                     else if (messageType.equals("Write_Replace_Warning_Confirm")) {
@@ -97,46 +99,62 @@ public class Server {
                         int num = allMessage.findSameWarning(SerialNumber,MessageIdentifier);
                         System.out.println("num:"+num);
                         if(num != -1) {
+
                             Warning warning = allMessage.getWarning(num);
-                            warning.getSender().setConfirmPacket(warning.getMessageidentifier(), warning.getSerialNumber(), warning.getWaringAreaCoordinates());
+                            //재난 confrim
+                            if(warning.getSerialNumber() == SerialNumber) {
+                                System.out.println("재난정보confirm");
+                                warning.getSender().setConfirmPacket(warning.getSerialNumber(), warning.getMessageidentifier(), warning.getWaringAreaCoordinates());
 
-                            //재전송중단
-                            warning.confirm();
-                            //추가정보 문자때문에 바로 삭제 안함(kill받으면 삭제하게 만들예정)
-                            allMessage.deleteWarning(num);
+                                //재전송중단
+                                warning.confirm();
+                                //confirm전송
+                                warning.getSender().sendConfirm();
+                                //추가정보 문자때문에 바로 삭제 안함(kill받으면 삭제하게 만들예정)
+                                //allMessage.deleteWarning(num);
+                            }
+                            //쉘터 confirm
+                            else{
+                                System.out.println("쉘터정보confirm");
+                                //해당 재난문자의 shelter불러옴
+                                Shelter shelter = warning.getShelter();
+                                //해당 문자와 같은 shelter 재전송 중단
+                                shelter.confirm(SerialNumber);
+                                warning.getSender().setConfirmPacket(warning.getSerialNumber(), warning.getMessageidentifier(), warning.getWaringAreaCoordinates());
+                                warning.getSender().sendConfirm();
+                            }
+
+
+
                         }
-                    } else if (messageType.equals("Shelter_Broadcast_Request")) {
+                    }
+                    else if (messageType.equals("Shelter_Broadcast_Request")) {
                         int MessageIdentifier = getMessageIdentifier(message);
                         int SerialNumber = getSerialNumber(message);
 
                         //검색
+                        //confirm인경운 쉘터문자도 확인하는 기능 추가!!!
                         int num = allMessage.findSameWarning(SerialNumber,MessageIdentifier);
                         System.out.println("num:"+num);
-                        Warning warning = allMessage.getWarning(num);
-                        //이 재난문자의 TAI List를 불러옴
-                        warning.getTrackingAreaVector();
+                        if(num != -1) {
+                            Warning warning = allMessage.getWarning(num);
+                            //재난 문자 업데이트
+                            warning.update();
 
-                        //재난 정보를 분할
+                            //이 재난문자의 TAI List를 불러옴
+                            warning.getTrackingAreaVector();
+                            JSONObject WarningObject = warning.WarningToJson();
+                            //System.out.println("쉘터정보 보내는 재난문자 원본:" +  WarningObject);
+                            Shelter shelter = warning.getShelter();
+                            shelter.ReadShelterText();
+                            //구 단위로 패킷생성 및 전송
+                            shelter.makePacket(WarningObject);
 
+                            //CBE에게 업데이트 됬다고 알림
+                            //confrim을보내고 해당 재난정보의 serialnumber++시킴
 
+                        }
 
-                        //MME로 전송
-
-                    } else if (messageType.equals("Shelter_Broadcast_Confirm")) {
-                        int MessageIdentifier = getMessageIdentifier(message);
-                        int SerialNumber = getSerialNumber(message);
-
-                        //검색
-                        int num = allMessage.findSameWarning(SerialNumber,MessageIdentifier);
-                        System.out.println("num:"+num);
-                        Warning warning = allMessage.getWarning(num);
-                        warning.getSender().setConfirmPacket(warning.getMessageidentifier(), warning.getSerialNumber(), warning.getWaringAreaCoordinates());
-                        //재전송중단
-                        warning.confirm();
-                        //재전송 중단
-
-                        //기록소에서 텀주고 삭제
-                    } else {
 
                     }
             }
@@ -182,12 +200,9 @@ public class Server {
         return 0;
     }
 
-    public void distributeShelter(){
-
-    }
-
-
     public static void main(String[] args) throws Exception {
+
+
         new Server(5000);
     }
 }

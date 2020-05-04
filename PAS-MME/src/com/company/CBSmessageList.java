@@ -17,8 +17,8 @@ public class CBSmessageList {
 
     public CBSmessage findmessage(JSONObject object){
 
-        int serialNumber = safeLongToInt((long)object.get("serialNumber"));
-        int messageidentifier = safeLongToInt((long)object.get("messageidentifier"));
+        int serialNumber = (int)object.get("serialNumber");
+        int messageidentifier = (int)object.get("messageidentifier");
 
         Vector<CBSmessage> vector = this.cbSmessageVector;
         CBSmessage message;
@@ -27,7 +27,8 @@ public class CBSmessageList {
             message = vector.get(i);
             if(message.getSerialNumber() == serialNumber && message.getMessageidentifier() == messageidentifier){
                 //해당 추출 후 삭제
-                vector.remove(i);
+                //vector.remove(i);
+                System.out.println(message);
                 return message;
             }
         }

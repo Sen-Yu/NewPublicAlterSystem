@@ -6,6 +6,8 @@ public class SerialNumber {
     //00000000 00000000
     int GS;
     int messageCode;
+    int moreInfonum;    //쉘터정보에 사용
+
     int updateNumber;
     int serialNumber;
 
@@ -16,19 +18,21 @@ public class SerialNumber {
     }
 
 
+
     void update(){
         this.updateNumber++;
+        this.serialNumber++;
     }
 
 
     public void setGS(int warningClass) {
         if(warningClass == 0){      //위급재난 문자
             //same init
-            this.GS = 0b0000000000000000;
+            this.GS = 0b1100000000000000;
         }else if(warningClass == 1){// 긴급재난 문자
-            this.messageCode=0b1100000000000000;
+            this.GS=0b1100000000000000;
         }else if(warningClass == 2){// 안전안내 문자
-            this.messageCode=0b0000000000000000;
+            this.GS=0b1100000000000000;
         }
     }
 
@@ -52,8 +56,7 @@ public class SerialNumber {
         this.setGS(warningClass);
         this.setMessageCode(warningClass);
         this.setUpdateNumber(0);
-        String hap = Integer.toBinaryString(this.GS)+Integer.toBinaryString(this.messageCode)+Integer.toBinaryString(this.updateNumber);
-        this.serialNumber = Integer.valueOf(hap, 2);
+        this.serialNumber = this.GS + this.messageCode + this.updateNumber;
     }
 
     public int getGS() {

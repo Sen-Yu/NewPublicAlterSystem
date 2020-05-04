@@ -16,7 +16,7 @@ import java.util.TimerTask;
 
 import static java.lang.Thread.sleep;
 
-public class ThreadSender extends Sender{
+public class Sender implements Runnable{
     public static int count = 0 ;
 
     DatagramSocket socket;
@@ -29,7 +29,6 @@ public class ThreadSender extends Sender{
     int sourcePort;
     int destPort;
 
-    int SerialNumber;
     int repetition;
     int number;
 
@@ -38,11 +37,10 @@ public class ThreadSender extends Sender{
     //Timer timer = new Timer();
     //MyTask task;
 
-    public ThreadSender(){
+    public Sender(){
 
     }
-
-    public ThreadSender(DatagramSocket socket,byte buffer[], InetAddress sourceInetAddress, int sourcePort, int repetition, int number) {
+    public Sender(DatagramSocket socket,byte buffer[], InetAddress sourceInetAddress, int sourcePort, int repetition, int number) {
         this.socket = socket;
         this.buffer = buffer;
         this.sourceInetAddress = sourceInetAddress;
@@ -70,18 +68,15 @@ public class ThreadSender extends Sender{
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("전송 쓰레드 종료!!!!");
+        System.out.println("쓰레드 종료!!!!");
     }
 
     public void confirm() throws IOException {
         this.confirm = true;
         System.out.println("CBC("+Thread.currentThread().getName()+")->CBE");
-        System.out.println("재전송취소!!!!");
-    }
-
-    public void sendConfirm() throws IOException {
         //MME로부터 받았기에 CBC는 CBE에게 confirm보냄
         this.socket.send(new DatagramPacket(this.confirmPacket.getData(),this.confirmPacket.getLength(),this.sourceInetAddress,3000));
+        System.out.println("재전송취소!!!!");
     }
 
     public void setBroadPacket(InetAddress destInetAddress, int destPort){
@@ -98,11 +93,4 @@ public class ThreadSender extends Sender{
         this.confirmPacket = new DatagramPacket(buffer, buffer.length);
     }
 
-    public void setSerialNumber(int serialNumber) {
-        this.SerialNumber = serialNumber;
-    }
-
-    public int getSerialNumber() {
-        return this.SerialNumber;
-    }
 }

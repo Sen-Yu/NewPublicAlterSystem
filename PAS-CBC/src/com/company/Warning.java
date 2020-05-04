@@ -30,7 +30,15 @@ public class Warning {
 
     //전송thread
     ThreadSender sender;
-    public Warning(){
+
+    Shelter shelter;
+
+    DatagramSocket  datagramSocket;
+    InetAddress inetAddress;
+    int portnum = 6000;
+
+    public Warning(DatagramSocket datagramSocket,InetAddress inetAddress){
+        //변환전
         this.source = new String();
         this.calamity = new String();
         this.impactArea = new String();
@@ -38,6 +46,7 @@ public class Warning {
         this.waringAreaCoordinates = new String();
         this.context = new String();
 
+        //변환후
         this.messageType = new String();
         this.messageidentifier = new Messageidentifier();
         this.serialNumber = new SerialNumber();
@@ -46,6 +55,8 @@ public class Warning {
         this.repetitionPeriod = 30;
         this.numberOfBroadcasts = 0;
         this.trackingAreaVector = new Vector<TrackingArea>();
+
+        this.shelter = new Shelter(datagramSocket,inetAddress);
     }
 
     //재난의 클래스를 정하는 메소드
@@ -78,7 +89,7 @@ public class Warning {
         */
         //kt통신사에서 0~14 eNodeB
         JSONArray TAIListItem = new JSONArray();
-        for(int i = 0 ; i < 15 ; i++) {
+        for(int i = 0 ; i < 5 ; i++) {
             JSONObject TAI = new JSONObject();
             TAI.put("plmnIdentity", 45008);
             TAI.put("trackingAreacode", i);
@@ -156,6 +167,8 @@ public class Warning {
         return this.serialNumber.getSerialNumber();
     }
 
+    public SerialNumber getSerialnumberO(){return this.serialNumber;}
+
     public String getWarningContentMessage() {
         return warningContentMessage;
     }
@@ -197,5 +210,9 @@ public class Warning {
 
     public Vector<TrackingArea> getTrackingAreaVector() {
         return this.trackingAreaVector;
+    }
+
+    public Shelter getShelter() {
+        return this.shelter;
     }
 }

@@ -25,7 +25,7 @@ public class Server {
 
 
             Vector<TrackingArea> vec= this.trackingAreaList.getTrackingAreaVector();
-            for(int i = 0 ; i < 20 ; i+=2){
+            for(int i = 0 ; i < 10 ; i+=2){
                 vec.add(new TrackingArea( 45008,i, address));
             }
 
@@ -36,8 +36,8 @@ public class Server {
                 byte buffer[] = new byte[1024];
                 DatagramPacket datagramPacket = new DatagramPacket(buffer,buffer.length);
                 //메세지 대기중
-                System.out.println("--------------------------------------------------------------------------------");
-                System.out.println("MME ready");
+                System.out.print("--------------------------------------------------------------------------------");
+                System.out.print("MME ready");
                 System.out.println("--------------------------------------------------------------------------------");
                 //메세지 받음
                 this.datagramSocket.receive(datagramPacket);
@@ -45,12 +45,13 @@ public class Server {
                 InetAddress datagramInetAddress = datagramPacket.getAddress();
                 int datagramPort = datagramPacket.getPort();
                 String message = new String(datagramPacket.getData()).trim();
-                System.out.println("source ip : "+ datagramInetAddress + " , source port : "+ datagramPort);
-
+                //System.out.println("source ip : "+ datagramInetAddress + " , source port : "+ datagramPort);
+                System.out.println(message);
                 //메세지 체크
                 String messageType = getMessageType(message);
                 //serialNumber & messageidentifier
                 JSONObject object = refacoring(message);
+                //System.out.println(messageType);
                 if (messageType.equals("Write_Replace_Warning_Request")) {
                     //TAILIST 추출
                     JSONArray TAIlist = getTAILIST(message);
@@ -59,7 +60,7 @@ public class Server {
                     ThreadSender confrim  = new  ThreadSender(this.datagramSocket,  makeConfirm(message),datagramInetAddress,datagramPort);
                     confrim.start();
                     //Request 수신시 송신을 위한 재난 문자 임시 저장
-                    //addCBSmessage(object,datagramInetAddress,datagramPort);
+                    addCBSmessage(object,datagramInetAddress,datagramPort);
                     System.out.println("send confirm to CBC");
                     //5.Write-Replace Warning Request를 eNB들에게 전송
                     //재난문자 재 구성
@@ -70,7 +71,6 @@ public class Server {
                         this.trackingAreaList.sendALL(msg);
                     }
 
-                    //sender.run(this.datagramSocket,warningConfirm.toJSONString().getBytes(), datagramInetAddress, 5000);
                     System.out.println("all send");
                 } else if (messageType.equals("Write_Replace_Warning_Response")) {
                    CBSmessage cbsmessage = this.cbsmessageList.findmessage(object);
@@ -116,7 +116,7 @@ public class Server {
             JSONParser jsonParser = new JSONParser();
             JSONObject jsonObject = (JSONObject) jsonParser.parse(message);
 
-            System.out.println("recieve:" + jsonObject.toJSONString());
+            //System.out.println("recieve:" + jsonObject.toJSONString());
             String messageType = (String) jsonObject.get("messageType");
             return messageType;
         }catch (ParseException e) {
@@ -200,7 +200,6 @@ public class Server {
             String messageType = (String) jsonObject.get("messageType");
             int serialNumber = safeLongToInt((long)jsonObject.get("serialNumber"));
             int messageidentifier = safeLongToInt((long)jsonObject.get("messageidentifier"));
-            String warningContentMessage = (String)jsonObject.get("warningContentMessage");
             int dataCodingScheme = safeLongToInt((long)jsonObject.get("dataCodingScheme"));
             JSONArray WarninAreaCoordinates = (JSONArray)jsonObject.get("WarninAreaCoordinates");
 
@@ -208,7 +207,7 @@ public class Server {
             obj.put("messageType",messageType);
             obj.put("serialNumber",serialNumber);
             obj.put("messageidentifier",messageidentifier);
-            obj.put("warningContentMessage",warningContentMessage);
+            obj.put("warningContentMessage", jsonObject.get("warningContentMessage"));
             obj.put("dataCodingScheme",dataCodingScheme);
             obj.put("WarninAreaCoordinates",WarninAreaCoordinates);
             return obj;
@@ -218,8 +217,9 @@ public class Server {
         return null;
     }
     public void addCBSmessage(JSONObject object,InetAddress inetAddress,int port){
-        int serialNumber = safeLongToInt((long)object.get("serialNumber"));
-        int messageidentifier = safeLongToInt((long)object.get("messageidentifier")) ;
+        int serialNumber = (int)object.get("serialNumber");
+        int messageidentifier = (int)object.get("messageidentifier");
+
         this.cbsmessageList.addCBSmessage(new CBSmessage(serialNumber,messageidentifier,inetAddress,port));
     }
 
