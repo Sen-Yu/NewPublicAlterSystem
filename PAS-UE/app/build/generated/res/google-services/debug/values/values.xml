@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">950139937937-dc31gd6jrafkmr2or15ovc1pvquirl1g.apps.googleusercontent.com</string>
+    <string name="firebase_database_url" translatable="false">https://pas-ue.firebaseio.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">950139937937</string>
+    <string name="google_api_key" translatable="false">AIzaSyDtoSNkGwQIhtyKe7drnwSZQUyWjLo4Ffg</string>
+    <string name="google_app_id" translatable="false">1:950139937937:android:1901ded7c3759dffb20b30</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDtoSNkGwQIhtyKe7drnwSZQUyWjLo4Ffg</string>
+    <string name="google_storage_bucket" translatable="false">pas-ue.appspot.com</string>
+    <string name="project_id" translatable="false">pas-ue</string>
+</resources>
